@@ -19,7 +19,7 @@ const notificationQueue = new Queue('notification-queue', { connection });
 router.get('/me', authenticate, async (req: any, res) => {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: req.user.userId },
+      where: { id: req.user.id },
       select: { id: true, name: true, email: true, role: true, specialization: true }
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -35,7 +35,7 @@ router.put('/me', authenticate, async (req: any, res) => {
   try {
     const { name, specialization } = req.body;
     const user = await prisma.user.update({
-      where: { id: req.user.userId },
+      where: { id: req.user.id },
       data: { 
         ...(name && { name }), 
         ...(specialization && { specialization }) 
