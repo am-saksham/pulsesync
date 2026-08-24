@@ -11,6 +11,8 @@ export default function PatientPortal() {
   const [isBooking, setIsBooking] = useState(false);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+  const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<Date[]>([]);
   
   // Settings Modal State
   const [showSettings, setShowSettings] = useState(false);
@@ -47,6 +49,55 @@ export default function PatientPortal() {
       })
       .catch(err => console.error(err));
   }, [router]);
+
+  // Generate slots when a doctor is selected
+  useEffect(() => {
+    if (!selectedDoctor || !selectedDoctor.workingHours) {
+      setAvailableSlots([]);
+      setSelectedSlot(null);
+      return;
+    }
+    
+    const slots: Date[] = [];
+    const { start, end } = selectedDoctor.workingHours;
+    const duration = selectedDoctor.slotDuration || 30;
+    
+    // Create base date for today
+    const now = new Date();
+    
+    // Parse start time
+    const startParts = start.split(':');
+    const startHour = parseInt(startParts[0] || '9');
+    const startMin = parseInt(startParts[1] || '0');
+    let currentTime = new Date(now);
+    currentTime.setHours(startHour, startMin, 0, 0);
+    
+    // Parse end time
+    const endParts = end.split(':');
+    const endHour = parseInt(endParts[0] || '17');
+    const endMin = parseInt(endParts[1] || '0');
+    const endTime = new Date(now);
+    endTime.setHours(endHour, endMin, 0, 0);
+
+    // If start time is in the past, shift to tomorrow for demo purposes
+    if (endTime < now) {
+      currentTime.setDate(currentTime.getDate() + 1);
+      endTime.setDate(endTime.getDate() + 1);
+    }
+
+    // Generate slots
+    while (currentTime < endTime) {
+      // Only add future slots if it's today
+      if (currentTime > now) {
+        slots.push(new Date(currentTime));
+      }
+      currentTime.setMinutes(currentTime.getMinutes() + duration);
+    }
+    
+    // Limit to 6 slots for UI purposes
+    setAvailableSlots(slots.slice(0, 6));
+    setSelectedSlot(null);
+  }, [selectedDoctor]);
 
   const saveSettings = async () => {
     setIsSaving(true);
@@ -163,15 +214,39 @@ export default function PatientPortal() {
                   <button onClick={() => setIsBooking(false)} className="text-slate-400 hover:text-white w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors">×</button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-5 border border-emerald-500/50 rounded-2xl bg-emerald-500/10 cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:bg-emerald-500/20 transition-colors">
-                    <p className="font-bold text-white text-lg">Today, 2:00 PM</p>
-                    <p className="text-sm text-emerald-400 font-medium mt-1">Available</p>
-                  </div>
-                  <div className="p-5 border border-white/5 rounded-2xl bg-white/5 opacity-50 cursor-not-allowed">
-                    <p className="font-bold text-slate-300 text-lg">Today, 3:00 PM</p>
-                    <p className="text-sm text-rose-400 font-medium mt-1">Booked</p>
-                  </div>
+                <div className="space-y-3">
+                  <label className="text-sm font-bold text-slate-300 tracking-wide uppercase flex justify-between">
+                    <span>Select Time</span>
+                    <span className="text-emerald-400 font-normal normal-case">{selectedDoctor.slotDuration || 30} min slots</span>
+                  </label>
+                  {availableSlots.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-3">
+                      {availableSlots.map((slot, i) => {
+                        const isSelected = selectedSlot?.getTime() === slot.getTime();
+                        return (
+                          <div 
+                            key={i}
+                            onClick={() => setSelectedSlot(slot)}
+                            className={`p-4 border rounded-xl cursor-pointer transition-all duration-300 flex flex-col items-center justify-center gap-1 ${
+                              isSelected 
+                                ? 'border-emerald-500/80 bg-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.3)] transform scale-[1.02]' 
+                                : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'
+                            }`}
+                          >
+                            <p className={`font-bold text-sm ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                              {slot.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            {isSelected && <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">Selected</p>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="p-5 border border-white/5 rounded-2xl bg-white/5 opacity-70 text-center">
+                      <p className="font-bold text-slate-300">No slots available today.</p>
+                      <p className="text-sm text-slate-400 mt-1">Please try searching for another doctor.</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-3">
@@ -181,12 +256,14 @@ export default function PatientPortal() {
                     value={symptoms}
                     onChange={(e) => setSymptoms(e.target.value)}
                     placeholder="E.g., I've had a mild chest pain and shortness of breath for 2 days..."
-                    className="glass-input h-32 resize-none focus:ring-emerald-500/50 focus:border-emerald-500/50 text-white placeholder:text-slate-500"
+                    className="glass-input h-32 resize-none focus:ring-emerald-500/50 focus:border-emerald-500/50 text-white placeholder:text-slate-500 w-full"
                   />
                 </div>
 
                 <button 
+                  disabled={!selectedSlot}
                   onClick={async () => {
+                    if (!selectedSlot) return;
                     try {
                       setIsBooking(false); // mock UI loading state
                       const token = localStorage.getItem("token");
@@ -198,7 +275,7 @@ export default function PatientPortal() {
                         },
                         body: JSON.stringify({
                           doctorId: selectedDoctor.id,
-                          startTime: new Date().toISOString(),
+                          startTime: selectedSlot.toISOString(),
                           symptoms: symptoms
                         })
                       });
