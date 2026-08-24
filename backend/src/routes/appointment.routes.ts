@@ -273,13 +273,13 @@ router.post('/:id/post-visit', authenticate, requireRole(['DOCTOR']), async (req
     const { id } = req.params;
     const { doctorNotes, prescription } = req.body;
 
-    const appointment = await prisma.appointment.findUnique({ where: { id } });
+    const appointment = await prisma.appointment.findUnique({ where: { id: String(id) } });
     if (!appointment || appointment.doctorId !== req.user!.id) {
       return res.status(404).json({ error: 'Appointment not found' });
     }
 
     const updated = await prisma.appointment.update({
-      where: { id },
+      where: { id: String(id) },
       data: {
         doctorNotes,
         prescription,
