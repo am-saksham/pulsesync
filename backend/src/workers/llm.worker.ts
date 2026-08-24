@@ -4,11 +4,13 @@ import { PrismaClient } from '@prisma/client';
 import { generatePreVisitSummary, generatePostVisitSummary } from '../services/llm.service';
 
 const prisma = new PrismaClient();
-const connection = new Redis(
-  process.env.REDIS_HOST 
-    ? { host: process.env.REDIS_HOST, port: Number(process.env.REDIS_PORT), maxRetriesPerRequest: null } 
-    : { host: '127.0.0.1', port: 6379, maxRetriesPerRequest: null }
-);
+const connection = process.env.REDIS_URL
+  ? new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null, tls: { rejectUnauthorized: false } })
+  : new Redis({
+      host: process.env.REDIS_HOST || '127.0.0.1',
+      port: Number(process.env.REDIS_PORT || 6379),
+      maxRetriesPerRequest: null
+    });
 
 export const llmWorker = new Worker('llm-queue', async job => {
   if (job.name === 'generate-pre-visit') {
