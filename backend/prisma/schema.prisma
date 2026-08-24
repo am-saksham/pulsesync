@@ -1,0 +1,91 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+  PATIENT
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  passwordHash   String
+  role           Role
+  name           String
+  
+  // Doctor specific
+  specialization String?
+  slotDuration   Int?      // in minutes
+  workingHours   Json?     // e.g., { start: "09:00", end: "17:00" }
+  
+  doctorAppointments  Appointment[] @relation("DoctorAppointments")
+  patientAppointments Appointment[] @relation("PatientAppointments")
+  leaves              DoctorLeave[]
+  
+  // External
+  googleRefreshToken  String?
+}
+
+model DoctorLeave {
+  id        String   @id @default(uuid())
+  doctorId  String
+  date      DateTime @db.Date
+  doctor    User     @relation(fields: [doctorId], references: [id])
+}
+
+model Appointment {
+  id              String   @id @default(uuid())
+  patientId       String
+  doctorId        String
+  startTime       DateTime
+  endTime         DateTime
+  status          AppointmentStatus @default(SCHEDULED)
+  
+  // Pre-visit
+  symptoms        String?
+  urgencyLevel    UrgencyLevel?
+  preVisitSummary String?  // LLM generated
+  suggestedQuestions Json? // LLM generated array
+  
+  // Post-visit
+  doctorNotes     String?
+  prescription    String?
+  postVisitSummary String? // LLM generated
+  
+  // External
+  googleEventId   String?
+
+  patient         User     @relation("PatientAppointments", fields: [patientId], references: [id])
+  doctor          User     @relation("DoctorAppointments", fields: [doctorId], references: [id])
+
+  @@unique([doctorId, startTime]) // Concurrency lock mechanism
+}
+
+model MedicationReminder {
+  id            String   @id @default(uuid())
+  appointmentId String
+  patientId     String
+  medication    String
+  scheduleInfo  String
+  nextRunAt     DateTime
+  isActive      Boolean  @default(true)
+}
