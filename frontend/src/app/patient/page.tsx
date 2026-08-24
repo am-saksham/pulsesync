@@ -2,14 +2,20 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Search, Calendar, Clock, AlertCircle } from "lucide-react";
+import { ArrowLeft, Search, Calendar, Clock, AlertCircle, Settings } from "lucide-react";
 
 export default function PatientPortal() {
   const router = useRouter();
+  const [user, setUser] = useState<any>(null);
   const [symptoms, setSymptoms] = useState("");
   const [isBooking, setIsBooking] = useState(false);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+  
+  // Settings Modal State
+  const [showSettings, setShowSettings] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -17,6 +23,19 @@ export default function PatientPortal() {
       router.push("/login");
       return;
     }
+
+    // Fetch current user
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/users/me`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.id) {
+          setUser(data);
+          setEditName(data.name);
+        }
+      })
+      .catch(err => console.error(err));
 
     // Fetch actual doctors from the backend
     fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/users/doctors`, {
@@ -29,6 +48,31 @@ export default function PatientPortal() {
       .catch(err => console.error(err));
   }, [router]);
 
+  const saveSettings = async () => {
+    setIsSaving(true);
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/users/me`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` 
+        },
+        body: JSON.stringify({ name: editName })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data);
+        setShowSettings(false);
+      } else {
+        alert(data.error || "Failed to update settings");
+      }
+    } catch (e) {
+      alert("Network error saving settings");
+    }
+    setIsSaving(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 md:p-12 font-sans text-slate-200">
       <div className="max-w-5xl mx-auto space-y-8 relative z-10">
@@ -39,11 +83,21 @@ export default function PatientPortal() {
             <Link href="/" className="inline-flex items-center text-slate-400 hover:text-white mb-4 transition-colors font-medium">
               <ArrowLeft size={16} className="mr-2" /> Back to Home
             </Link>
-            <h1 className="text-4xl font-extrabold text-white tracking-tight">Patient Dashboard</h1>
+            <h1 className="text-4xl font-extrabold text-white tracking-tight">
+              {user ? `Welcome, ${user.name.split(' ')[0]}` : "Patient Dashboard"}
+            </h1>
             <p className="text-slate-400 mt-2 text-lg">Book an appointment or view your upcoming visits.</p>
           </div>
-          <div className="w-14 h-14 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 rounded-full flex items-center justify-center font-bold text-2xl shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-            P
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setShowSettings(true)}
+              className="p-3 bg-white/5 border border-white/10 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition-colors shadow-[0_0_10px_rgba(255,255,255,0.05)]"
+            >
+              <Settings size={20} />
+            </button>
+            <div className="w-14 h-14 bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 rounded-full flex items-center justify-center font-bold text-2xl shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+              {user ? user.name.charAt(0).toUpperCase() : "P"}
+            </div>
           </div>
         </div>
 
@@ -203,6 +257,43 @@ export default function PatientPortal() {
         </div>
       </div>
       
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="glass-panel p-8 w-full max-w-md border-white/20 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+            <h2 className="text-2xl font-bold text-white mb-6">Profile Settings</h2>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-300 uppercase tracking-wide">Full Name</label>
+                <input 
+                  type="text" 
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  className="glass-input text-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4 mt-8">
+              <button 
+                onClick={() => setShowSettings(false)}
+                className="flex-1 py-3 bg-white/5 border border-white/10 text-white font-bold rounded-xl hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={saveSettings}
+                disabled={isSaving || !editName.trim()}
+                className="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-500 transition-colors shadow-[0_0_15px_rgba(16,185,129,0.3)] disabled:opacity-50"
+              >
+                {isSaving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Ambient Background Glows */}
       <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-600/10 blur-[120px] pointer-events-none"></div>
       <div className="fixed bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-600/10 blur-[120px] pointer-events-none"></div>

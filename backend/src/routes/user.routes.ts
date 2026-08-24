@@ -15,6 +15,40 @@ const connection = process.env.REDIS_URL
     });
 const notificationQueue = new Queue('notification-queue', { connection });
 
+// Get current authenticated user
+router.get('/me', authenticate, async (req: any, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { id: true, name: true, email: true, role: true, specialization: true }
+    });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update current authenticated user
+router.put('/me', authenticate, async (req: any, res) => {
+  try {
+    const { name, specialization } = req.body;
+    const user = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { 
+        ...(name && { name }), 
+        ...(specialization && { specialization }) 
+      },
+      select: { id: true, name: true, email: true, role: true, specialization: true }
+    });
+    res.json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Get list of doctors, optionally filtered by specialization
 router.get('/doctors', async (req, res) => {
   try {
