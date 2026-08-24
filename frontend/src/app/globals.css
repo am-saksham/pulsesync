@@ -24,13 +24,23 @@ body {
   background-attachment: fixed;
 }
 
-/* Input Overrides */
-input, textarea {
-  color: #0f172a !important; /* Force text color in inputs to always be dark slate */
-  background-color: #ffffff !important;
+/* Glass Input Utility */
+.glass-input {
+  background: rgba(15, 23, 42, 0.4) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #f1f5f9 !important;
+  padding: 0.75rem 1rem !important;
+  border-radius: 0.75rem !important;
+  outline: none !important;
+  transition: all 0.3s ease !important;
 }
-input::placeholder, textarea::placeholder {
-  color: #94a3b8 !important;
+.glass-input:focus {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.05) !important;
+}
+.glass-input::placeholder {
+  color: #64748b !important;
 }
 
 /* Custom Utilities for World-Class UI */

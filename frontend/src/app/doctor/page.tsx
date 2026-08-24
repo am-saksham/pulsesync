@@ -16,6 +16,9 @@ export default function DoctorPortal() {
   const [showSettings, setShowSettings] = useState(false);
   const [editName, setEditName] = useState("");
   const [editSpecialization, setEditSpecialization] = useState("");
+  const [editSlotDuration, setEditSlotDuration] = useState("30");
+  const [editStartTime, setEditStartTime] = useState("09:00");
+  const [editEndTime, setEditEndTime] = useState("17:00");
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -35,6 +38,11 @@ export default function DoctorPortal() {
           setUser(data);
           setEditName(data.name || "");
           setEditSpecialization(data.specialization || "");
+          setEditSlotDuration(data.slotDuration ? String(data.slotDuration) : "30");
+          if (data.workingHours) {
+            setEditStartTime(data.workingHours.start || "09:00");
+            setEditEndTime(data.workingHours.end || "17:00");
+          }
         }
       })
       .catch(err => console.error(err));
@@ -62,7 +70,12 @@ export default function DoctorPortal() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}` 
         },
-        body: JSON.stringify({ name: editName, specialization: editSpecialization })
+        body: JSON.stringify({ 
+          name: editName, 
+          specialization: editSpecialization,
+          slotDuration: parseInt(editSlotDuration),
+          workingHours: { start: editStartTime, end: editEndTime }
+        })
       });
       const data = await res.json();
       if (res.ok) {
@@ -293,8 +306,43 @@ export default function DoctorPortal() {
                   value={editSpecialization}
                   onChange={e => setEditSpecialization(e.target.value)}
                   placeholder="e.g. Cardiologist"
-                  className="glass-input text-white"
+                  className="glass-input text-white w-full"
                 />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-300 uppercase tracking-wide">Start Time</label>
+                  <input 
+                    type="time" 
+                    value={editStartTime}
+                    onChange={e => setEditStartTime(e.target.value)}
+                    className="glass-input text-white w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-300 uppercase tracking-wide">End Time</label>
+                  <input 
+                    type="time" 
+                    value={editEndTime}
+                    onChange={e => setEditEndTime(e.target.value)}
+                    className="glass-input text-white w-full"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 mt-4">
+                <label className="text-sm font-bold text-slate-300 uppercase tracking-wide">Slot Duration (Minutes)</label>
+                <select 
+                  value={editSlotDuration}
+                  onChange={e => setEditSlotDuration(e.target.value)}
+                  className="glass-input text-white w-full cursor-pointer bg-slate-900"
+                >
+                  <option value="15">15 Minutes</option>
+                  <option value="30">30 Minutes</option>
+                  <option value="45">45 Minutes</option>
+                  <option value="60">60 Minutes</option>
+                </select>
               </div>
             </div>
 

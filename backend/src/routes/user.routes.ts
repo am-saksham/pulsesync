@@ -33,14 +33,16 @@ router.get('/me', authenticate, async (req: any, res) => {
 // Update current authenticated user
 router.put('/me', authenticate, async (req: any, res) => {
   try {
-    const { name, specialization } = req.body;
+    const { name, specialization, slotDuration, workingHours } = req.body;
     const user = await prisma.user.update({
       where: { id: req.user.id },
       data: { 
         ...(name && { name }), 
-        ...(specialization && { specialization }) 
+        ...(specialization && { specialization }),
+        ...(slotDuration && { slotDuration: Number(slotDuration) }),
+        ...(workingHours && { workingHours })
       },
-      select: { id: true, name: true, email: true, role: true, specialization: true }
+      select: { id: true, name: true, email: true, role: true, specialization: true, slotDuration: true, workingHours: true }
     });
     res.json(user);
   } catch (error) {
