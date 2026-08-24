@@ -13,6 +13,8 @@ export default function PatientPortal() {
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
   const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
   const [availableSlots, setAvailableSlots] = useState<Date[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [selectedSummary, setSelectedSummary] = useState<any>(null);
   
   // Settings Modal State
   const [showSettings, setShowSettings] = useState(false);
@@ -46,6 +48,16 @@ export default function PatientPortal() {
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) setDoctors(data);
+      })
+      .catch(err => console.error(err));
+
+    // Fetch patient appointments
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/appointments/patient`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setAppointments(data);
       })
       .catch(err => console.error(err));
   }, [router]);
@@ -305,35 +317,100 @@ export default function PatientPortal() {
               <h2 className="text-lg font-bold text-white flex items-center">
                 <Calendar size={20} className="mr-2 text-blue-400" /> Upcoming Visits
               </h2>
-              <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex gap-5 hover:bg-white/10 transition-colors cursor-default">
-                <div className="flex flex-col items-center justify-center bg-slate-900/50 border border-white/10 w-14 h-14 rounded-xl text-white font-bold shadow-inner">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-widest">Oct</span>
-                  <span className="text-lg">24</span>
+              {appointments
+                .filter(a => a.status === 'SCHEDULED' && new Date(a.startTime) >= new Date())
+                .sort((a,b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                .map(appt => (
+                <div key={appt.id} className="p-5 rounded-2xl bg-white/5 border border-white/10 flex gap-5 hover:bg-white/10 transition-colors cursor-default">
+                  <div className="flex flex-col items-center justify-center bg-slate-900/50 border border-white/10 w-14 h-14 rounded-xl text-white font-bold shadow-inner">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-widest">{new Date(appt.startTime).toLocaleString('default', { month: 'short' })}</span>
+                    <span className="text-lg">{new Date(appt.startTime).getDate()}</span>
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <h3 className="font-bold text-white text-base">{appt.doctor?.name}</h3>
+                    <p className="text-xs text-blue-400 flex items-center mt-1 font-medium">
+                      <Clock size={12} className="mr-1"/> 
+                      {new Date(appt.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex flex-col justify-center">
-                  <h3 className="font-bold text-white text-base">Dr. Alan Turing</h3>
-                  <p className="text-xs text-blue-400 flex items-center mt-1 font-medium"><Clock size={12} className="mr-1"/> 10:00 AM</p>
+              ))}
+              {appointments.filter(a => a.status === 'SCHEDULED' && new Date(a.startTime) >= new Date()).length === 0 && (
+                <div className="p-5 border border-white/5 border-dashed flex items-center justify-center opacity-50 rounded-2xl">
+                  <p className="text-sm font-bold text-slate-400">No upcoming visits</p>
                 </div>
-              </div>
+              )}
             </div>
 
-            <div className="glass-panel p-6 border-emerald-500/20 bg-emerald-950/20 shadow-[0_0_30px_rgba(16,185,129,0.05)] space-y-4 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700"></div>
-              <h2 className="text-lg font-bold text-emerald-400 flex items-center">
-                <AlertCircle size={20} className="mr-2" /> AI Insights Ready
-              </h2>
-              <p className="text-sm text-slate-300 leading-relaxed">
-                Dr. Turing submitted notes from your last visit. Your AI-simplified summary and medication schedule are ready to view.
-              </p>
-              <button className="inline-flex items-center text-sm font-bold text-white bg-emerald-500/20 px-4 py-2 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors">
-                View Summary &rarr;
-              </button>
-            </div>
+            {appointments.filter(a => a.status === 'COMPLETED' && (a.postVisitSummary || a.doctorNotes)).slice(0, 1).map(appt => (
+              <div key={appt.id} className="glass-panel p-6 border-emerald-500/20 bg-emerald-950/20 shadow-[0_0_30px_rgba(16,185,129,0.05)] space-y-4 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700"></div>
+                <h2 className="text-lg font-bold text-emerald-400 flex items-center">
+                  <AlertCircle size={20} className="mr-2" /> AI Insights Ready
+                </h2>
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  {appt.doctor?.name} submitted notes from your last visit on {new Date(appt.startTime).toLocaleDateString()}. Your AI-simplified summary and medication schedule are ready to view.
+                </p>
+                <button 
+                  onClick={() => setSelectedSummary(appt)}
+                  className="inline-flex items-center text-sm font-bold text-white bg-emerald-500/20 px-4 py-2 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors cursor-pointer relative z-10"
+                >
+                  View Summary &rarr;
+                </button>
+              </div>
+            ))}
           </div>
 
         </div>
       </div>
       
+      {/* AI Summary Modal */}
+      {selectedSummary && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300 overflow-y-auto pt-24 pb-12">
+          <div className="glass-panel p-8 w-full max-w-2xl border-emerald-500/30 shadow-[0_0_50px_rgba(16,185,129,0.2)]">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-white flex items-center">
+                  <AlertCircle size={24} className="mr-2 text-emerald-400" /> Post-Visit Summary
+                </h2>
+                <p className="text-slate-400 mt-1">Consultation with {selectedSummary.doctor?.name}</p>
+              </div>
+              <button onClick={() => setSelectedSummary(null)} className="text-slate-400 hover:text-white bg-white/5 p-2 rounded-full hover:bg-white/10 transition-colors">×</button>
+            </div>
+            
+            <div className="space-y-6">
+              {selectedSummary.postVisitSummary && (
+                <div className="p-5 bg-emerald-950/30 border border-emerald-500/20 rounded-xl space-y-2">
+                  <p className="text-[11px] font-black text-emerald-400 uppercase tracking-widest">AI Simplified Summary</p>
+                  <p className="text-slate-200 leading-relaxed whitespace-pre-wrap">{selectedSummary.postVisitSummary}</p>
+                </div>
+              )}
+              
+              <div className="p-5 bg-white/5 border border-white/10 rounded-xl space-y-2">
+                <p className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Doctor's Clinical Notes</p>
+                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{selectedSummary.doctorNotes || "No notes provided."}</p>
+              </div>
+
+              {selectedSummary.prescription && selectedSummary.prescription !== "N/A" && (
+                <div className="p-5 bg-white/5 border border-white/10 rounded-xl space-y-2">
+                  <p className="text-[11px] font-black text-rose-400 uppercase tracking-widest">Prescription / Medication</p>
+                  <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{selectedSummary.prescription}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <button 
+                onClick={() => setSelectedSummary(null)}
+                className="px-6 py-3 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Settings Modal */}
       {showSettings && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">

@@ -245,6 +245,28 @@ router.get('/doctor', authenticate, requireRole(['DOCTOR']), async (req: AuthReq
   }
 });
 
+// Patient gets their own appointments
+router.get('/patient', authenticate, requireRole(['PATIENT']), async (req: AuthRequest, res) => {
+  try {
+    const patientId = req.user!.id;
+    
+    const appointments = await prisma.appointment.findMany({
+      where: { patientId },
+      include: {
+        doctor: {
+          select: { id: true, name: true, specialization: true }
+        }
+      },
+      orderBy: { startTime: 'desc' }
+    });
+
+    res.json(appointments);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Post-visit notes
 router.post('/:id/post-visit', authenticate, requireRole(['DOCTOR']), async (req: AuthRequest, res) => {
   try {
