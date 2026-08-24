@@ -32,19 +32,19 @@ export default function DoctorPortal() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-12 font-sans">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 md:p-12 font-sans text-slate-200">
+      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
         
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <Link href="/" className="inline-flex items-center text-slate-500 hover:text-slate-900 mb-4 transition-colors">
+            <Link href="/" className="inline-flex items-center text-slate-400 hover:text-white mb-4 transition-colors font-medium">
               <ArrowLeft size={16} className="mr-2" /> Back to Home
             </Link>
-            <h1 className="text-4xl font-extrabold text-slate-900">Dr. Sarah Jenkins</h1>
-            <p className="text-slate-500 mt-2">Cardiologist • Dashboard</p>
+            <h1 className="text-4xl font-extrabold text-white tracking-tight">Dr. Sarah Jenkins</h1>
+            <p className="text-slate-400 mt-2 text-lg">Cardiologist • Dashboard</p>
           </div>
-          <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-xl shadow-sm">
+          <div className="w-14 h-14 bg-blue-500/20 border border-blue-500/50 text-blue-400 rounded-full flex items-center justify-center font-bold text-2xl shadow-[0_0_15px_rgba(59,130,246,0.3)]">
             SJ
           </div>
         </div>
@@ -52,18 +52,18 @@ export default function DoctorPortal() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
           {/* Sidebar Navigation */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <button 
               onClick={() => setActiveTab("upcoming")}
-              className={`w-full flex items-center px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === "upcoming" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100"}`}
+              className={`w-full flex items-center px-5 py-4 rounded-xl font-bold transition-all duration-300 ${activeTab === "upcoming" ? "bg-white/10 text-white border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)]" : "text-slate-400 hover:bg-white/5 hover:text-white border border-transparent"}`}
             >
-              <CalendarDays size={18} className="mr-3" /> Today's Schedule
+              <CalendarDays size={20} className={`mr-3 ${activeTab === "upcoming" ? "text-blue-400" : ""}`} /> Today's Schedule
             </button>
             <button 
               onClick={() => setActiveTab("patients")}
-              className={`w-full flex items-center px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === "patients" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100"}`}
+              className={`w-full flex items-center px-5 py-4 rounded-xl font-bold transition-all duration-300 ${activeTab === "patients" ? "bg-white/10 text-white border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.05)]" : "text-slate-400 hover:bg-white/5 hover:text-white border border-transparent"}`}
             >
-              <Users size={18} className="mr-3" /> My Patients
+              <Users size={20} className={`mr-3 ${activeTab === "patients" ? "text-blue-400" : ""}`} /> My Patients
             </button>
           </div>
 
@@ -72,41 +72,44 @@ export default function DoctorPortal() {
             
             {/* Active Appointment View */}
             {activeAppointment ? (
-            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
-              <div className="flex justify-between items-start mb-8">
+            <div className="glass-panel p-8 md:p-10 border-blue-500/20 shadow-[0_0_40px_rgba(59,130,246,0.05)] relative overflow-hidden">
+              {/* Subtle inner glow */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+              <div className="flex justify-between items-start mb-10 relative z-10">
                 <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className={`px-3 py-1 text-xs font-bold uppercase rounded-full tracking-wider ${
-                      activeAppointment.urgencyLevel === 'HIGH' ? 'bg-rose-100 text-rose-700' : 
-                      activeAppointment.urgencyLevel === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className={`px-4 py-1 text-[10px] font-black uppercase rounded-full tracking-widest ${
+                      activeAppointment.urgencyLevel === 'HIGH' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 
+                      activeAppointment.urgencyLevel === 'MEDIUM' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                     }`}>
                       {activeAppointment.urgencyLevel || 'STANDARD'} Urgency
                     </span>
-                    <span className="text-slate-400 text-sm font-medium">
+                    <span className="text-slate-400 text-sm font-bold bg-white/5 px-3 py-1 rounded-full border border-white/10">
                       {new Date(activeAppointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-900">{activeAppointment.patient?.name || 'Unknown Patient'}</h2>
+                  <h2 className="text-3xl font-black text-white">{activeAppointment.patient?.name || 'Unknown Patient'}</h2>
                 </div>
-                <button className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-lg shadow-blue-200">
+                <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)]">
                   Start Video Call
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
                 {/* AI Pre-Visit Summary */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-bold text-slate-900 flex items-center">
-                    <BrainCircuit size={18} className="mr-2 text-blue-500" /> AI Pre-Visit Summary
+                  <h3 className="text-lg font-bold text-white flex items-center">
+                    <BrainCircuit size={20} className="mr-3 text-blue-400" /> AI Pre-Visit Summary
                   </h3>
-                  <div className="p-5 bg-blue-50/50 border border-blue-100 rounded-2xl space-y-3">
-                    <p className="text-sm text-slate-700 leading-relaxed">
-                      <strong className="text-slate-900">Chief Complaint:</strong> {activeAppointment.preVisitSummary || activeAppointment.symptoms || "No symptoms provided."}
+                  <div className="p-6 bg-blue-950/40 border border-blue-500/30 rounded-2xl space-y-4 shadow-[inset_0_0_20px_rgba(59,130,246,0.1)]">
+                    <p className="text-sm text-slate-300 leading-relaxed">
+                      <strong className="text-white">Chief Complaint:</strong> {activeAppointment.preVisitSummary || activeAppointment.symptoms || "No symptoms provided."}
                     </p>
                     {activeAppointment.suggestedQuestions && activeAppointment.suggestedQuestions.length > 0 && (
-                    <div className="pt-2">
-                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Suggested Questions</p>
-                      <ul className="text-sm text-slate-700 list-disc list-inside space-y-1">
+                    <div className="pt-3 border-t border-blue-500/20">
+                      <p className="text-[11px] font-black text-blue-400 uppercase tracking-widest mb-3">Suggested Questions</p>
+                      <ul className="text-sm text-slate-300 list-disc list-outside ml-4 space-y-2">
                         {activeAppointment.suggestedQuestions.map((q: string, i: number) => (
                           <li key={i}>{q}</li>
                         ))}
@@ -118,14 +121,14 @@ export default function DoctorPortal() {
 
                 {/* Consultation Notes Form */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-bold text-slate-900 flex items-center">
-                    <FileText size={18} className="mr-2 text-slate-400" /> Consultation Notes
+                  <h3 className="text-lg font-bold text-white flex items-center">
+                    <FileText size={20} className="mr-3 text-slate-400" /> Consultation Notes
                   </h3>
                   <textarea 
                     value={consultationNotes}
                     onChange={(e) => setConsultationNotes(e.target.value)}
                     placeholder="Type your clinical notes here..."
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl h-[160px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none text-sm"
+                    className="glass-input h-48 resize-none focus:ring-blue-500/50 focus:border-blue-500/50 text-white placeholder:text-slate-500"
                   />
                   <button 
                     onClick={async () => {
@@ -153,7 +156,7 @@ export default function DoctorPortal() {
                         alert("Network error");
                       }
                     }}
-                    className="w-full py-3 border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors"
+                    className="w-full py-4 bg-white/5 border border-white/10 text-white font-bold rounded-xl hover:bg-white/10 hover:border-white/30 transition-all"
                   >
                     Save & Generate Patient Summary
                   </button>
@@ -162,37 +165,47 @@ export default function DoctorPortal() {
 
             </div>
             ) : (
-              <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-center py-20">
-                <p className="text-slate-500">No active appointments right now.</p>
+              <div className="glass-panel p-8 text-center py-24 border-white/5">
+                <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
+                  <CalendarDays size={32} className="text-slate-500" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">You're all caught up!</h3>
+                <p className="text-slate-400">No active appointments right now.</p>
               </div>
             )}
 
             {/* Upcoming Queue */}
-            <h3 className="font-bold text-slate-900 pt-4">Up Next</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h3 className="font-bold text-white text-xl pt-6">Up Next</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {appointments.filter(a => a.id !== activeAppointment?.id).map(appt => (
                 <div 
                   key={appt.id}
                   onClick={() => setActiveAppointment(appt)}
-                  className="p-5 bg-white border border-slate-200 rounded-2xl flex justify-between items-center hover:border-blue-300 transition-colors cursor-pointer"
+                  className="p-5 glass-panel border border-white/5 flex justify-between items-center hover:border-blue-400/50 hover:bg-white/10 transition-all duration-300 hover:translate-x-1 cursor-pointer group"
                 >
                   <div>
-                    <h4 className="font-bold text-slate-900">{appt.patient?.name}</h4>
-                    <p className="text-xs font-medium text-slate-500 mt-1">
+                    <h4 className="font-bold text-white text-lg group-hover:text-blue-300 transition-colors">{appt.patient?.name}</h4>
+                    <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">
                       {new Date(appt.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
-                  <span className={`w-2 h-2 rounded-full ${appt.urgencyLevel === 'HIGH' ? 'bg-rose-500' : 'bg-emerald-500'}`}></span>
+                  <span className={`w-3 h-3 rounded-full shadow-[0_0_10px_currentColor] ${appt.urgencyLevel === 'HIGH' ? 'bg-rose-500 text-rose-500' : 'bg-emerald-500 text-emerald-500'}`}></span>
                 </div>
               ))}
               {appointments.length <= 1 && (
-                <p className="text-sm text-slate-400 p-4">No upcoming appointments.</p>
+                <div className="p-5 glass-panel border border-white/5 border-dashed flex items-center justify-center opacity-50">
+                  <p className="text-sm font-bold text-slate-400">Queue is empty</p>
+                </div>
               )}
             </div>
 
           </div>
         </div>
       </div>
+
+      {/* Ambient Background Glows */}
+      <div className="fixed top-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none"></div>
+      <div className="fixed bottom-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-600/10 blur-[120px] pointer-events-none"></div>
     </div>
   );
 }
