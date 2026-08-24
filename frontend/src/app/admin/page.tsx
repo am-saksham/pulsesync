@@ -27,7 +27,7 @@ export default function AdminPortal() {
   }, [router]);
 
   const fetchDoctors = (token: string) => {
-    fetch("http://localhost:3001/api/users/doctors", {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/users/doctors`, {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -96,7 +96,7 @@ export default function AdminPortal() {
                 onClick={async () => {
                   try {
                     const token = localStorage.getItem("token");
-                    const res = await fetch("http://localhost:3001/api/users/admin/doctors", {
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/users/admin/doctors`, {
                       method: "POST",
                       headers: { 
                         "Content-Type": "application/json",
@@ -156,7 +156,7 @@ export default function AdminPortal() {
                 onClick={async () => {
                   try {
                     const token = localStorage.getItem("token");
-                    const res = await fetch("http://localhost:3001/api/users/admin/leaves", {
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/users/admin/leaves`, {
                       method: "POST",
                       headers: { 
                         "Content-Type": "application/json",

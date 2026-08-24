@@ -18,7 +18,7 @@ export default function DoctorPortal() {
       return;
     }
 
-    fetch("http://localhost:3001/api/appointments/doctor", {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/appointments/doctor`, {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -131,7 +131,7 @@ export default function DoctorPortal() {
                     onClick={async () => {
                       try {
                         const token = localStorage.getItem("token");
-                        const res = await fetch(`http://localhost:3001/api/appointments/${activeAppointment.id}/post-visit`, {
+                        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/appointments/${activeAppointment.id}/post-visit`, {
                           method: "POST",
                           headers: { 
                             "Content-Type": "application/json",

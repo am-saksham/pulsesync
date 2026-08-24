@@ -19,7 +19,7 @@ export default function PatientPortal() {
     }
 
     // Fetch actual doctors from the backend
-    fetch("http://localhost:3001/api/users/doctors", {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/users/doctors`, {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -131,7 +131,7 @@ export default function PatientPortal() {
                     try {
                       setIsBooking(false); // mock UI loading state
                       const token = localStorage.getItem("token");
-                      const res = await fetch("http://localhost:3001/api/appointments/book", {
+                      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/appointments/book`, {
                         method: "POST",
                         headers: { 
                           "Content-Type": "application/json",
